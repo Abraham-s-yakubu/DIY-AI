@@ -1,6 +1,7 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Solution } from '../types';
-import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon } from './icons';
+import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon } from './icons';
 
 const useCopyToClipboard = (): [boolean, (text: string) => void] => {
   const [isCopied, setIsCopied] = useState(false);
@@ -100,11 +101,16 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
     
   const fullTextToSpeak = useMemo(() => {
       const diagnosis = `Diagnosis: ${solution.diagnosis}`;
+      const difficulty = `The difficulty is ${solution.difficulty} and it should take about ${solution.estimatedTime}.`;
       const tools = solution.tools.length > 0
           ? `Tools needed: ${solution.tools.join(', ')}.`
           : 'No special tools are required.';
       const instructions = `Instructions: ${solution.instructions.map((step, index) => `Step ${index + 1}. ${step}`).join(' ')}`;
-      return [diagnosis, tools, instructions].join('\n\n');
+      const pitfalls = solution.potentialPitfalls.length > 0 
+          ? `Be aware of these potential pitfalls: ${solution.potentialPitfalls.join('. ')}`
+          : '';
+
+      return [diagnosis, difficulty, tools, instructions, pitfalls].join('\n\n');
   }, [solution]);
   
   const handlePlayPause = () => {
@@ -136,6 +142,17 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
         )}
       </div>
       
+      <div className="flex flex-wrap gap-4 mb-6">
+          <div className="flex items-center text-sm text-gray-700 bg-gray-100 rounded-full px-4 py-1.5">
+            <ChartBarIcon className="h-5 w-5 text-gray-500 mr-2" />
+            <strong className="font-semibold">Difficulty:</strong><span className="ml-1.5">{solution.difficulty}</span>
+          </div>
+          <div className="flex items-center text-sm text-gray-700 bg-gray-100 rounded-full px-4 py-1.5">
+            <ClockIcon className="h-5 w-5 text-gray-500 mr-2" />
+            <strong className="font-semibold">Time:</strong><span className="ml-1.5">{solution.estimatedTime}</span>
+          </div>
+      </div>
+
       <div className="mb-8">
         <div className="flex items-center mb-3">
           <LightbulbIcon className="h-7 w-7 text-yellow-500 mr-3" />
@@ -168,7 +185,7 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
         )}
       </div>
 
-      <div>
+      <div className="mb-8">
         <h3 className="text-2xl font-semibold text-gray-700 mb-4">Step-by-Step Instructions</h3>
         <ol className="list-none space-y-4">
           {solution.instructions.map((step, index) => {
@@ -190,6 +207,24 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
           })}
         </ol>
       </div>
+
+      {solution.potentialPitfalls && solution.potentialPitfalls.length > 0 && (
+         <div className="mt-8 bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
+            <div className="flex items-center mb-3">
+              <WarningIcon className="h-7 w-7 text-orange-500 mr-3" />
+              <h3 className="text-2xl font-semibold text-gray-700">Potential Pitfalls</h3>
+            </div>
+            <ul className="space-y-2 pl-2">
+              {solution.potentialPitfalls.map((pitfall, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="text-orange-700 mr-2 font-bold">&bull;</span>
+                  <span className="text-orange-800">{pitfall}</span>
+                </li>
+              ))}
+            </ul>
+        </div>
+      )}
+
     </div>
   );
 };

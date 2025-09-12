@@ -8,8 +8,11 @@ Based on the visual information and the user's text, perform the following actio
 1.  **Diagnose the Problem:** In one or two clear, simple sentences, explain what you believe the issue is.
 2.  **List Tools Needed:** Provide a bulleted list of the necessary tools. If no tools are needed, state that clearly.
 3.  **Provide Step-by-Step Instructions:** Give a numbered list of instructions. The instructions must be clear, concise, and easy for a beginner to follow. **Crucially, begin with a safety warning if applicable (e.g., "Safety First: Turn off the water supply..." or "Safety First: Unplug the appliance...").**
+4.  **Estimate Difficulty:** Categorize the repair's difficulty (e.g., Beginner, Intermediate, Advanced).
+5.  **Estimate Time:** Provide a time estimate for the repair (e.g., '15-30 minutes').
+6.  **List Potential Pitfalls:** Mention 1-3 common mistakes or pitfalls to avoid during this repair.
 
-Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object. The JSON object should have three keys: "diagnosis", "tools" (an array of strings), and "instructions" (an array of strings).`;
+Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object. The JSON object should have six keys: "diagnosis", "tools", "instructions", "difficulty", "estimatedTime", and "potentialPitfalls".`;
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -32,8 +35,23 @@ const responseSchema = {
       },
       description: "Clear, step-by-step instructions for the fix, starting with a safety warning if applicable."
     },
+    difficulty: {
+        type: Type.STRING,
+        description: "The estimated difficulty of the repair (e.g., Beginner, Intermediate, Advanced)."
+    },
+    estimatedTime: {
+        type: Type.STRING,
+        description: "The estimated time to complete the repair (e.g., '15-30 minutes')."
+    },
+    potentialPitfalls: {
+        type: Type.ARRAY,
+        items: {
+            type: Type.STRING
+        },
+        description: "A list of common mistakes or pitfalls to avoid."
+    },
   },
-  required: ["diagnosis", "tools", "instructions"],
+  required: ["diagnosis", "tools", "instructions", "difficulty", "estimatedTime", "potentialPitfalls"],
 };
 
 const MOCK_SOLUTION: Solution = {
@@ -48,6 +66,13 @@ const MOCK_SOLUTION: Solution = {
     "Locate and replace the old O-rings with new ones from your kit.",
     "Reassemble the faucet in reverse order.",
     "Turn the water supply back on slowly and check for leaks.",
+  ],
+  difficulty: "Beginner",
+  estimatedTime: "30-45 minutes",
+  potentialPitfalls: [
+    "Forgetting to turn off the water supply.",
+    "Using the wrong size replacement O-rings.",
+    "Scratching the faucet finish with tools."
   ],
 };
 

@@ -1,40 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { CameraIcon, MicrophoneIcon } from './icons';
-import ListeningModal from './ListeningModal';
-
-// Fix: Add type definitions for the Web Speech API to resolve TypeScript errors.
-// These types are not included in the default TypeScript DOM library.
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  [index: number]: {
-    transcript: string;
-  };
-}
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResult[];
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
-
-interface SpeechRecognition {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: { new (): SpeechRecognition };
-    webkitSpeechRecognition: { new (): SpeechRecognition };
-  }
-}
+import React, { useState, useCallback, useRef } from 'react';
+import { CameraIcon } from './icons';
 
 interface InputFormProps {
   onSubmit: (imageBase64: string, mimeType: string, problemDescription: string) => void;
@@ -60,72 +25,6 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit }) => {
   const [problemDescription, setProblemDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const hasSpeechRecognition = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
-
-  useEffect(() => {
-    if (!hasSpeechRecognition) return;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-        for (let i = 0; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
-            } else {
-                interimTranscript += event.results[i][0].transcript;
-            }
-        }
-        setTranscript(finalTranscript + interimTranscript);
-    };
-
-    recognition.onerror = (event) => {
-        console.error("Speech recognition error", event.error);
-        setError(`Speech recognition error: ${event.error}. Please ensure microphone access is allowed.`);
-        setIsListening(false);
-    };
-
-    recognition.onend = () => {
-        setIsListening(false);
-    };
-    
-    recognitionRef.current = recognition;
-
-    return () => {
-        recognitionRef.current?.stop();
-    };
-  }, [hasSpeechRecognition]);
-
-  const handleStartListening = () => {
-    if (!hasSpeechRecognition || isListening) return;
-    setTranscript('');
-    try {
-        recognitionRef.current?.start();
-        setIsListening(true);
-    } catch (e) {
-        console.error("Could not start recognition", e);
-        setError("Could not start voice recognition. Please check microphone permissions.");
-    }
-  };
-
-  const handleStopListening = () => {
-    if (isListening) {
-        recognitionRef.current?.stop();
-        setIsListening(false);
-        setProblemDescription(prev => (prev ? prev.trim() + ' ' : '') + transcript.trim());
-        setTranscript('');
-    }
-  };
-
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -162,9 +61,6 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit }) => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isListening) {
-      handleStopListening();
-    }
     if (!imageFile) {
       setError('Please upload an image of the problem.');
       return;
@@ -222,19 +118,6 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit }) => {
                   onChange={(e) => setProblemDescription(e.target.value)}
               />
             </div>
-            {hasSpeechRecognition && (
-                <div className="mt-4 flex flex-col items-center">
-                    <p className="text-sm text-gray-500 mb-2">or</p>
-                    <button
-                        type="button"
-                        onClick={handleStartListening}
-                        className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-105"
-                        aria-label="Start recording"
-                    >
-                        <MicrophoneIcon className="h-8 w-8" />
-                    </button>
-                </div>
-            )}
           </div>
           
           <div className="text-sm">
@@ -266,11 +149,6 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit }) => {
           </div>
         </form>
       </div>
-      <ListeningModal 
-        isOpen={isListening} 
-        transcript={transcript} 
-        onStop={handleStopListening} 
-      />
     </>
   );
 };

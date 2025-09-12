@@ -1,7 +1,5 @@
 {
   "name": "DIY-AI Fix-It",
   "description": "An AI-powered assistant to help you diagnose and solve common household problems. Just upload a photo and describe the issue, and get a step-by-step guide to fix it.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }
