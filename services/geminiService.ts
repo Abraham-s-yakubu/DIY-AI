@@ -36,12 +36,32 @@ const responseSchema = {
   required: ["diagnosis", "tools", "instructions"],
 };
 
+const MOCK_SOLUTION: Solution = {
+  diagnosis: "This is a sample diagnosis for a leaky faucet. The O-ring is likely worn out and needs replacement.",
+  tools: ["Adjustable wrench", "Phillips head screwdriver", "Replacement O-ring kit", "Rag"],
+  instructions: [
+    "Safety First: Turn off the water supply valves under the sink before starting.",
+    "Use the adjustable wrench to loosen the faucet handle's base.",
+    "Lift the handle off to expose the faucet body.",
+    "Unscrew the cap with your wrench.",
+    "Carefully pull out the faucet cartridge or ball valve.",
+    "Locate and replace the old O-rings with new ones from your kit.",
+    "Reassemble the faucet in reverse order.",
+    "Turn the water supply back on slowly and check for leaks.",
+  ],
+};
+
 
 export const getFixItSolution = async (
   imageBase64: string,
   mimeType: string,
   problemDescription: string
 ): Promise<Solution> => {
+  if (!process.env.API_KEY) {
+    console.warn("⚠️ API_KEY not found. Using mock data for demo purposes. Please set your API_KEY as an environment variable for real results.");
+    return new Promise(resolve => setTimeout(() => resolve(MOCK_SOLUTION), 2000));
+  }
+
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -73,6 +93,9 @@ export const getFixItSolution = async (
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     if (error instanceof Error) {
+        if (error.message.includes('API key not valid')) {
+             throw new Error("Your API key is not valid. Please check it in your environment variables.");
+        }
         throw new Error(`Failed to get solution: ${error.message}`);
     }
     throw new Error("An unknown error occurred while fetching the solution.");
