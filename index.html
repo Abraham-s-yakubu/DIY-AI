@@ -8,6 +8,48 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            keyframes: {
+              swing: {
+                '0%, 100%': { transform: 'rotate(-30deg)' },
+                '50%': { transform: 'rotate(10deg)' },
+              },
+              turn: {
+                '0%, 100%': { transform: 'rotate(-25deg)' },
+                '50%': { transform: 'rotate(25deg)' },
+              },
+              saw: {
+                '0%, 100%': { transform: 'translateX(-10px) rotate(-5deg)' },
+                '50%': { transform: 'translateX(10px) rotate(5deg)' },
+              },
+              brush: {
+                '0%, 100%': { transform: 'rotate(20deg)' },
+                '50%': { transform: 'rotate(-20deg)' },
+              },
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              'scale-in': {
+                '0%': { transform: 'scale(0.95)', opacity: '0' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+            },
+            animation: {
+              swing: 'swing 1.5s ease-in-out infinite',
+              turn: 'turn 2s ease-in-out infinite',
+              saw: 'saw 1.8s ease-in-out infinite',
+              brush: 'brush 2.2s ease-in-out infinite',
+              'fade-in': 'fade-in 0.2s ease-out',
+              'scale-in': 'scale-in 0.2s ease-out',
+            },
+          },
+        },
+      };
+    </script>
     <style>
       body {
         font-family: 'Roboto', sans-serif;
@@ -16,30 +58,10 @@
       .font-google-sans {
         font-family: 'Google Sans', sans-serif;
       }
-      @keyframes swing {
-        0%, 100% { transform: rotate(-30deg); }
-        50% { transform: rotate(10deg); }
-      }
-      .animate-swing { animation: swing 1.5s ease-in-out infinite; }
-      
-      @keyframes turn {
-        0%, 100% { transform: rotate(-25deg); }
-        50% { transform: rotate(25deg); }
-      }
-      .animate-turn { animation: turn 2s ease-in-out infinite; }
-      
-      @keyframes saw {
-        0%, 100% { transform: translateX(-10px) rotate(-5deg); }
-        50% { transform: translateX(10px) rotate(5deg); }
-      }
-      .animate-saw { animation: saw 1.8s ease-in-out infinite; }
-
-      @keyframes brush {
-        0%, 100% { transform: rotate(20deg); }
-        50% { transform: rotate(-20deg); }
-      }
-      .animate-brush { animation: brush 2.2s ease-in-out infinite; }
-
+      /*
+        Custom tool animations have been moved to the tailwind.config script block
+        to ensure they are processed correctly by the Tailwind CDN.
+      */
     </style>
     <script type="importmap">
       {

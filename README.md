@@ -8,7 +8,7 @@ An AI-powered assistant to help you diagnose and solve common household problems
 
 ## ✨ Features
 
-- **Image-Based Diagnosis**: Upload a photo of the problem for visual analysis.
+- **Multi-Modal Diagnosis**: Upload a photo for static issues or a short video for dynamic problems like drips, rattles, or wobbles. The AI analyzes motion and sound for a more accurate diagnosis.
 - **Natural Language Descriptions**: Describe the issue in your own words.
 - **Comprehensive Repair Plans**: The AI generates a complete plan that includes:
     - **Clear Diagnosis**: A simple explanation of the problem.
@@ -16,18 +16,20 @@ An AI-powered assistant to help you diagnose and solve common household problems
     - **Step-by-Step Instructions**: Easy-to-follow steps, with automated safety warnings for hazardous tasks.
     - **Difficulty & Time Estimates**: Know what you're getting into before you start.
     - **Potential Pitfalls**: Tips on common mistakes to avoid.
+- **Interactive Step Verification**: The app guides you step-by-step. After each action, upload a photo and the AI acts as a supervisor, comparing the "before" and "after" states to confirm your work is correct or provide helpful, corrective feedback.
+- **The Part Finder**: Need a specific replacement part? Upload a photo of the old or broken piece, and the AI will use fine-grained visual recognition to identify the exact make and model, tell you where to buy it, and even find an installation video.
 - **Contextual Follow-up Chat**: Ask questions about the provided solution and get instant, context-aware answers from the AI.
 - **Text-to-Speech**: Have the instructions read aloud to you for hands-free guidance.
 - **Responsive UI**: A clean, intuitive, and mobile-friendly interface.
-- **Copy to Clipboard**: Easily copy the tool list or individual steps.
 
 ## 🚀 How It Works
 
-1.  **Upload a Photo**: Select or drag-and-drop an image of what needs fixing.
-2.  **Describe the Problem**: Write a brief description of the issue. You can also use one of the provided examples to get started.
-3.  **Get Fix-It Plan**: Click the button to submit your problem to the AI.
-4.  **Review Your Guide**: The app displays a detailed, easy-to-read repair plan.
-5.  **Ask Follow-ups**: Use the integrated chat to ask clarifying questions about the repair.
+1.  **Upload a Photo or Video**: Choose the best format to show your problem.
+2.  **Describe the Problem**: Write a brief description of the issue.
+3.  **Get Fix-It Plan**: The AI analyzes your submission and generates a detailed repair guide.
+4.  **Follow and Verify**: Follow the instructions one step at a time. Use the "Check My Work" feature to upload a photo and get instant AI feedback before proceeding.
+5.  **Find a Part (Optional)**: If you need a replacement part, use the "Find Replacement Part" feature to upload a photo of the old one and get an exact identification.
+6.  **Ask Follow-ups**: Use the integrated chat to ask clarifying questions about the repair.
 
 ## 💻 Technology Stack
 

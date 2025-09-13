@@ -1,8 +1,7 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Solution } from '../types';
 import type { Chat } from '@google/genai';
-import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon } from './icons';
+import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon, MagnifyingGlassIcon, CameraIcon } from './icons';
 import ChatComponent from './Chat';
 
 const useCopyToClipboard = (): [boolean, (text: string) => void] => {
@@ -97,9 +96,12 @@ const useTextToSpeech = () => {
 interface SolutionDisplayProps {
   solution: Solution;
   chat: Chat | null;
+  onFindPartClick: () => void;
+  currentStepIndex: number;
+  onCheckWork: (stepIndex: number) => void;
 }
 
-const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat }) => {
+const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat, onFindPartClick, currentStepIndex, onCheckWork }) => {
   const { isSpeaking, isPaused, speak, pause, resume, cancel, isSupported } = useTextToSpeech();
     
   const fullTextToSpeak = useMemo(() => {
@@ -128,21 +130,30 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat }) => 
 
   return (
     <div className="w-full text-left">
-      <div className="flex flex-wrap justify-between items-start border-b border-gray-200 pb-4 mb-6 gap-4">
+      <div className="flex flex-wrap justify-between items-center border-b border-gray-200 pb-4 mb-6 gap-4">
         <h2 className="text-3xl font-bold text-gray-800">Your Fix-It Plan</h2>
-        {isSupported && (
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-600">Read Aloud:</span>
-                <button onClick={handlePlayPause} className="p-2 rounded-full text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors" aria-label={isSpeaking && !isPaused ? "Pause" : "Play"}>
-                    {isSpeaking && !isPaused ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-                </button>
-                {isSpeaking && (
-                    <button onClick={cancel} className="p-2 rounded-full text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors" aria-label="Stop">
-                        <StopIcon className="h-5 w-5" />
+        <div className="flex items-center gap-4">
+            {isSupported && (
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600">Read Aloud:</span>
+                    <button onClick={handlePlayPause} className="p-2 rounded-full text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors" aria-label={isSpeaking && !isPaused ? "Pause" : "Play"}>
+                        {isSpeaking && !isPaused ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
                     </button>
-                )}
-            </div>
-        )}
+                    {isSpeaking && (
+                        <button onClick={cancel} className="p-2 rounded-full text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors" aria-label="Stop">
+                            <StopIcon className="h-5 w-5" />
+                        </button>
+                    )}
+                </div>
+            )}
+             <button 
+                onClick={onFindPartClick} 
+                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+            >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+                Find Replacement Part
+            </button>
+        </div>
       </div>
       
       <div className="flex flex-wrap gap-4 mb-6">
@@ -193,17 +204,36 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat }) => 
         <ol className="list-none space-y-4">
           {solution.instructions.map((step, index) => {
             const isSafetyWarning = step.toLowerCase().startsWith('safety first:');
+            const isCompleted = index < currentStepIndex;
+            const isActive = index === currentStepIndex;
+
             return (
-              <li key={index} className={`flex items-start group ${isSafetyWarning ? 'bg-red-50 border border-red-200 rounded-lg p-4' : ''}`}>
-                {isSafetyWarning && <WarningIcon className="h-6 w-6 text-red-500 mr-4 flex-shrink-0 mt-1" />}
-                {!isSafetyWarning && (
-                   <div className="flex-shrink-0 h-8 w-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
-                     {index + 1}
-                   </div>
-                )}
-                <p className={`flex-1 ${isSafetyWarning ? 'text-red-700 font-semibold' : 'text-gray-600'}`}>
-                  {step}
-                </p>
+              <li key={index} className={`flex items-start group p-4 rounded-lg transition-all duration-300 ${isActive ? 'bg-blue-50 shadow' : ''} ${isCompleted ? 'opacity-60' : ''}`}>
+                 <div className="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center font-bold mr-4 mt-1">
+                    {isSafetyWarning ? (
+                        <WarningIcon className="h-7 w-7 text-red-500" />
+                    ) : isCompleted ? (
+                        <CheckCircleIcon className="h-8 w-8 text-green-500" />
+                    ) : (
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${isActive ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                            {index + 1}
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1">
+                    <p className={` ${isSafetyWarning ? 'text-red-700 font-semibold' : 'text-gray-600'} ${isCompleted ? 'line-through' : ''}`}>
+                      {step}
+                    </p>
+                    {isActive && !isSafetyWarning && (
+                        <button 
+                            onClick={() => onCheckWork(index)}
+                            className="mt-3 flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <CameraIcon className="h-4 w-4" />
+                            Check My Work
+                        </button>
+                    )}
+                </div>
                  <CopyButton textToCopy={step} className="opacity-0 group-hover:opacity-100 ml-4 mt-1" />
               </li>
             );
