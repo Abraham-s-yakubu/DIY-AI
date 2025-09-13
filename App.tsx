@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import type { Solution } from './types';
-import { getFixItSolution } from './services/geminiService';
+import type { Chat } from '@google/genai';
+import { getFixItSolution, startChatSession } from './services/geminiService';
 import InputForm from './components/InputForm';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorAlert from './components/ErrorAlert';
@@ -77,14 +78,24 @@ const App: React.FC = () => {
   const [solution, setSolution] = useState<Solution | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [chat, setChat] = useState<Chat | null>(null);
 
   const handleSubmit = useCallback(async (imageBase64: string, mimeType: string, problemDescription: string) => {
     setIsLoading(true);
     setError(null);
     setSolution(null);
+    setChat(null);
     try {
       const result = await getFixItSolution(imageBase64, mimeType, problemDescription);
       setSolution(result);
+      
+      const context = `
+        Problem Description: ${problemDescription}
+        Solution Provided: ${JSON.stringify(result, null, 2)}
+      `;
+      const chatSession = startChatSession(context);
+      setChat(chatSession);
+
     } catch (e: unknown) {
       if (e instanceof Error) {
         setError(e.message);
@@ -100,6 +111,7 @@ const App: React.FC = () => {
     setSolution(null);
     setError(null);
     setIsLoading(false);
+    setChat(null);
   };
 
   return (
@@ -119,7 +131,7 @@ const App: React.FC = () => {
         </Modal>
 
         <Modal isOpen={!!solution} onClose={handleReset}>
-            {solution && <SolutionDisplay solution={solution} />}
+            {solution && <SolutionDisplay solution={solution} chat={chat} />}
         </Modal>
 
         <footer className="text-center mt-12 text-sm text-gray-500">

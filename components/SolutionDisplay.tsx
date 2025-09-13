@@ -1,7 +1,9 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Solution } from '../types';
+import type { Chat } from '@google/genai';
 import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon } from './icons';
+import ChatComponent from './Chat';
 
 const useCopyToClipboard = (): [boolean, (text: string) => void] => {
   const [isCopied, setIsCopied] = useState(false);
@@ -94,9 +96,10 @@ const useTextToSpeech = () => {
 
 interface SolutionDisplayProps {
   solution: Solution;
+  chat: Chat | null;
 }
 
-const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
+const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat }) => {
   const { isSpeaking, isPaused, speak, pause, resume, cancel, isSupported } = useTextToSpeech();
     
   const fullTextToSpeak = useMemo(() => {
@@ -222,6 +225,13 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution }) => {
                 </li>
               ))}
             </ul>
+        </div>
+      )}
+
+      {chat && (
+        <div className="mt-10 pt-6 border-t border-gray-200">
+            <h3 className="text-2xl font-semibold text-gray-700 mb-4">Ask a Follow-up</h3>
+            <ChatComponent chat={chat} />
         </div>
       )}
 

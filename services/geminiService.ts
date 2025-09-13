@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { Solution } from '../types';
 
 const SYSTEM_INSTRUCTION = `You are an expert DIY assistant named "DIY-AI Fix-It". Your role is to help users solve common household problems safely and effectively. A user has provided an image and a text description.
@@ -125,4 +124,28 @@ export const getFixItSolution = async (
     }
     throw new Error("An unknown error occurred while fetching the solution.");
   }
+};
+
+export const startChatSession = (initialContext: string): Chat | null => {
+    if (!process.env.API_KEY) {
+        console.warn("⚠️ API_KEY not found, chat is disabled.");
+        return null;
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+            systemInstruction: `You are a helpful DIY assistant. The user has already received an initial diagnosis and a set of instructions for their problem. Your role now is to answer follow-up questions clearly and concisely.
+
+**Formatting Rules:**
+- Do not use markdown like asterisks (*) for bolding or italics.
+- For lists, use a hyphen (-) at the beginning of each line.
+
+Here is the context of the original problem and the solution you provided:
+${initialContext}
+
+Now, continue the conversation and help the user with any further questions they have about this specific repair. Be friendly and encouraging. If they ask about a new problem, politely ask them to start a new "Fix-It" session.`,
+        },
+    });
+    return chat;
 };
