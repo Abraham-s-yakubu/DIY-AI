@@ -8,7 +8,9 @@ import SolutionDisplay from './components/SolutionDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorAlert from './components/ErrorAlert';
 import PartFinder from './components/ListeningModal';
-import { HammerIcon, CloseIcon } from './components/icons';
+import LocaleSelector from './components/LocaleSelector';
+import type { Locale } from './components/LocaleSelector';
+import { HammerIcon, CloseIcon, WarningIcon, GithubIcon } from './components/icons';
 
 type AppState = 'idle' | 'loading' | 'error' | 'solution';
 type ModalState = 'none' | 'partFinder';
@@ -45,6 +47,25 @@ const Modal: React.FC<{ isOpen: boolean, onClose: () => void, children: React.Re
     );
 };
 
+const HighRiskWarning: React.FC<{ solution: Solution }> = ({ solution }) => {
+    return (
+        <div className="bg-red-50 border-l-4 border-red-500 p-8 rounded-r-lg text-center animate-fade-in">
+            <WarningIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-3xl font-bold text-red-800">Professional Help Required</h2>
+            <p className="mt-4 text-lg text-red-700">
+                This repair is considered **High Risk**. For your safety, please do not attempt this yourself.
+            </p>
+            <div className="mt-6 bg-white p-4 rounded-md shadow-sm">
+                <p className="text-md text-gray-800 font-semibold">AI Safety Assessment:</p>
+                <p className="mt-2 text-gray-600">{solution.safetyWarning}</p>
+            </div>
+            <p className="mt-6 text-sm text-gray-500">
+                Contact a licensed professional for assistance.
+            </p>
+        </div>
+    );
+};
+
 
 const App: React.FC = () => {
     const [appState, setAppState] = useState<AppState>('idle');
@@ -53,6 +74,7 @@ const App: React.FC = () => {
     const [solution, setSolution] = useState<Solution | null>(null);
     const [chat, setChat] = useState<Chat | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [locale, setLocale] = useState<Locale>('Generic/Global');
 
     // Part Finder state
     const [isPartFinderLoading, setIsPartFinderLoading] = useState(false);
@@ -70,19 +92,22 @@ const App: React.FC = () => {
         setCurrentStepProgress(0); // Reset progress
         
         try {
-            const result = await getFixItSolution(fileBase64, mimeType, problemDescription);
+            const result = await getFixItSolution(fileBase64, mimeType, problemDescription, locale);
             setSolution(result);
             setAppState('solution');
             
-            const context = `Problem: ${problemDescription}\nSolution Provided:\n- Diagnosis: ${result.diagnosis}\n- Instructions: ${result.instructions.join('\n')}`;
-            const chatSession = startChatSession(context);
-            setChat(chatSession);
+            // Only start a chat session for low/medium risk repairs that have instructions
+            if (result.risk !== 'High' && result.diagnosis && result.instructions) {
+                const context = `Problem: ${problemDescription}\nSolution Provided:\n- Diagnosis: ${result.diagnosis}\n- Instructions: ${result.instructions.join('\n')}`;
+                const chatSession = startChatSession(context);
+                setChat(chatSession);
+            }
 
         } catch (e: any) {
             setError(e.message || 'An unexpected error occurred.');
             setAppState('error');
         }
-    }, []);
+    }, [locale]);
     
     const handleIdentifyPart = useCallback(async (imageBase64: string, mimeType: string) => {
         setIsPartFinderLoading(true);
@@ -112,7 +137,7 @@ const App: React.FC = () => {
     const handleCheckWork = (stepIndex: number) => {
         // Since there's no UI for uploading 'before' and 'after' images for verification,
         // we'll simply advance the step progress to allow the user to track where they are.
-        if (solution && stepIndex < solution.instructions.length) {
+        if (solution && solution.instructions && stepIndex < solution.instructions.length) {
            setCurrentStepProgress(stepIndex + 1);
         }
     };
@@ -140,6 +165,9 @@ const App: React.FC = () => {
                 );
             case 'solution':
                 if (solution) {
+                    if (solution.risk === 'High') {
+                        return <HighRiskWarning solution={solution} />;
+                    }
                     return <SolutionDisplay 
                                 solution={solution} 
                                 chat={chat} 
@@ -164,11 +192,23 @@ const App: React.FC = () => {
                             <HammerIcon className="h-8 w-8 text-blue-600" />
                             <h1 className="ml-3 text-2xl font-bold text-gray-800 tracking-tight">DIY-AI Fix-It</h1>
                         </div>
-                        {(appState === 'solution' || appState === 'error') && (
-                            <button onClick={handleReset} className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                                Start New Fix
-                            </button>
-                        )}
+                        <div className="flex items-center gap-4">
+                            {(appState === 'solution' || appState === 'error') && (
+                                <button onClick={handleReset} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                                    Start New Fix
+                                </button>
+                            )}
+                             <LocaleSelector locale={locale} onLocaleChange={setLocale} />
+                             <a 
+                                href="https://github.com/google-gemini/diy-ai-fix-it-react" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+                                aria-label="View source on GitHub"
+                             >
+                                <GithubIcon className="h-6 w-6" />
+                            </a>
+                        </div>
                     </div>
                 </div>
             </header>

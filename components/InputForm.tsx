@@ -169,8 +169,8 @@ const InputForm: React.FC<InputFormProps> = ({ onSubmit }) => {
               />
             </div>
           </div>
-          
-          <div className="text-sm">
+
+          <div className="text-sm pt-2">
               <span className="text-gray-500 mr-2">Try an example:</span>
               <div className="inline-flex gap-2 flex-wrap">
                   {examples.map((ex) => (

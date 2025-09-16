@@ -52,8 +52,8 @@ To run this project locally, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/diy-ai-fix-it.git
-    cd diy-ai-fix-it
+    git clone https://github.com/google-gemini/diy-ai-fix-it-react.git
+    cd diy-ai-fix-it-react
     ```
 
 2.  **Set up your API Key:**

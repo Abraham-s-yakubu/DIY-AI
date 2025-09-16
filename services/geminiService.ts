@@ -1,36 +1,38 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import type { Solution, PartIdentification, VerificationResult } from '../types';
 
-const SYSTEM_INSTRUCTION_PHOTO = `You are an expert DIY assistant named "DIY-AI Fix-It". Your role is to help users solve common household problems safely and effectively. A user has provided an image and a text description.
+const SYSTEM_INSTRUCTION_PHOTO = `You are an expert DIY assistant named "DIY-AI Fix-It". Your role is to help users solve common household problems safely and effectively. A user has provided an image and a text description. The user is located in **{locale}**. Your suggestions for tools and materials should reflect what is commonly available and named in this region (e.g., "spanner" in the UK vs. "wrench" in the USA; metric vs. imperial units where appropriate). If the location is 'Generic/Global', use widely understood terms.
 
-Based on the visual information and the user's text, perform the following actions:
-1.  **Diagnose the Problem:** In one or two clear, simple sentences, explain what you believe the issue is.
-2.  **List Tools Needed:** Provide a bulleted list of the necessary tools. If no tools are needed, state that clearly.
-3.  **Provide Step-by-Step Instructions:** Give a numbered list of instructions. The instructions must be clear, concise, and easy for a beginner to follow. **Crucially, begin with a safety warning if applicable (e.g., "Safety First: Turn off the water supply..." or "Safety First: Unplug the appliance...").**
-4.  **Estimate Difficulty:** Categorize the repair's difficulty (e.g., Beginner, Intermediate, Advanced).
-5.  **Estimate Time:** Provide a time estimate for the repair (e.g., '15-30 minutes').
-6.  **List Potential Pitfalls:** Mention 1-3 common mistakes or pitfalls to avoid during this repair.
+Perform the following actions in order:
+1.  **Risk Assessment:** First, analyze the user's request to determine the risk level for a typical homeowner. Categorize it as 'Low', 'Medium', or 'High'. High-risk tasks involve main electrical panels, gas lines, structural modifications, or anything requiring licensed professionals.
+2.  **Response Generation:**
+    -   **If the risk is 'High'**: Your response MUST be a JSON object containing ONLY two keys: "risk": "High" and "safetyWarning": "[A clear, firm message advising the user to stop and consult a licensed professional. Explain briefly why it's high-risk, e.g., 'Working with main electrical panels can be fatal.']". **DO NOT provide any DIY steps.**
+    -   **If the risk is 'Low' or 'Medium'**: Proceed with the full analysis and generate a JSON object with all the following keys: "risk", "diagnosis", "tools", "instructions", "difficulty", "estimatedTime", and "potentialPitfalls". The "risk" key must reflect your assessment ('Low' or 'Medium'). Instructions must begin with a safety warning if applicable (e.g., "Safety First: Turn off the water supply...").
 
-Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object. The JSON object should have six keys: "diagnosis", "tools", "instructions", "difficulty", "estimatedTime", and "potentialPitfalls".`;
+Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object.`;
 
-const SYSTEM_INSTRUCTION_VIDEO = `You are a master repair technician named "DIY-AI Fix-It". A user has provided a short video and a text description of a household problem. Your task is to analyze the video to diagnose the issue with a high degree of accuracy.
+const SYSTEM_INSTRUCTION_VIDEO = `You are a master repair technician named "DIY-AI Fix-It". A user has provided a short video and a text description of a household problem. Your task is to analyze the video to diagnose the issue with a high degree of accuracy. Pay close attention to the speed, direction, and consistency of any motion, as well as any audible sounds. The user is located in **{locale}**. Your suggestions for tools and materials should reflect what is commonly available and named in this region (e.g., "spanner" in the UK vs. "wrench" in the USA; metric vs. imperial units where appropriate). If the location is 'Generic/Global', use widely understood terms.
 
-Pay close attention to the **speed, direction, and consistency of any motion**, as well as any **audible sounds** (like drips, rattles, or hums). Based on this dynamic behavior, provide a complete repair plan.
+Perform the following actions in order:
+1.  **Risk Assessment:** First, analyze the user's request to determine the risk level for a typical homeowner. Categorize it as 'Low', 'Medium', or 'High'. High-risk tasks involve main electrical panels, gas lines, structural modifications, or anything requiring licensed professionals.
+2.  **Response Generation:**
+    -   **If the risk is 'High'**: Your response MUST be a JSON object containing ONLY two keys: "risk": "High" and "safetyWarning": "[A clear, firm message advising the user to stop and consult a licensed professional. Explain briefly why it's high-risk, e.g., 'Working with main electrical panels can be fatal.']". **DO NOT provide any DIY steps.**
+    -   **If the risk is 'Low' or 'Medium'**: Proceed with the full analysis and generate a JSON object with all the following keys: "risk", "diagnosis", "tools", "instructions", "difficulty", "estimatedTime", and "potentialPitfalls". The "risk" key must reflect your assessment ('Low' or 'Medium'). Instructions must begin with a safety warning if applicable (e.g., "Safety First: Turn off the water supply...").
 
-Perform the following actions:
-1.  **Diagnose the Problem:** Based on the video's motion and sound, explain the most likely root cause in one or two sentences.
-2.  **List Tools Needed:** Provide a bulleted list of the necessary tools.
-3.  **Provide Step-by-Step Instructions:** Give a numbered list of clear, concise instructions, starting with a safety warning if applicable.
-4.  **Estimate Difficulty:** Categorize the repair's difficulty.
-5.  **Estimate Time:** Provide a time estimate for the repair.
-6.  **List Potential Pitfalls:** Mention common mistakes to avoid.
-
-Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object. The JSON object should have six keys: "diagnosis", "tools", "instructions", "difficulty", "estimatedTime", and "potentialPitfalls".`;
+Your entire response MUST be in a valid JSON format, with no extra text before or after the JSON object.`;
 
 
 const responseSchema = {
   type: Type.OBJECT,
   properties: {
+    risk: {
+        type: Type.STRING,
+        description: "The assessed risk level of the repair ('Low', 'Medium', 'High'). This is mandatory."
+    },
+    safetyWarning: {
+        type: Type.STRING,
+        description: "A warning message for high-risk jobs. This should only be present if risk is 'High'."
+    },
     diagnosis: {
       type: Type.STRING,
       description: "A clear, simple diagnosis of the problem in one or two sentences.",
@@ -65,10 +67,11 @@ const responseSchema = {
         description: "A list of common mistakes or pitfalls to avoid."
     },
   },
-  required: ["diagnosis", "tools", "instructions", "difficulty", "estimatedTime", "potentialPitfalls"],
+  required: ["risk"],
 };
 
 const MOCK_SOLUTION: Solution = {
+  risk: "Low",
   diagnosis: "This is a sample diagnosis for a leaky faucet. The O-ring is likely worn out and needs replacement.",
   tools: ["Adjustable wrench", "Phillips head screwdriver", "Replacement O-ring kit", "Rag"],
   instructions: [
@@ -94,7 +97,8 @@ const MOCK_SOLUTION: Solution = {
 export const getFixItSolution = async (
   fileBase64: string,
   mimeType: string,
-  problemDescription: string
+  problemDescription: string,
+  locale: string,
 ): Promise<Solution> => {
   if (!process.env.API_KEY) {
     console.warn("⚠️ API_KEY not found. Using mock data for demo purposes. Please set your API_KEY as an environment variable for real results.");
@@ -115,9 +119,11 @@ export const getFixItSolution = async (
       text: problemDescription,
     };
 
-    const systemInstruction = mimeType.startsWith('video/') 
+    const systemInstructionTemplate = mimeType.startsWith('video/') 
         ? SYSTEM_INSTRUCTION_VIDEO
         : SYSTEM_INSTRUCTION_PHOTO;
+        
+    const systemInstruction = systemInstructionTemplate.replace('{locale}', locale);
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',

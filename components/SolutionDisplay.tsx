@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import type { Solution } from '../types';
 import type { Chat } from '@google/genai';
-import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon, MagnifyingGlassIcon, CameraIcon } from './icons';
+import { LightbulbIcon, ToolIcon, CheckCircleIcon, WarningIcon, ClipboardIcon, ClipboardCheckIcon, PlayIcon, PauseIcon, StopIcon, ClockIcon, ChartBarIcon, MagnifyingGlassIcon, CameraIcon, ShieldCheckIcon } from './icons';
 import ChatComponent from './Chat';
 
 const useCopyToClipboard = (): [boolean, (text: string) => void] => {
@@ -92,6 +92,18 @@ const useTextToSpeech = () => {
   return { isSpeaking, isPaused, speak, pause, resume, cancel, isSupported: !!synth };
 };
 
+const riskColorMap = {
+    'Low': 'text-green-700 bg-green-100',
+    'Medium': 'text-yellow-700 bg-yellow-100',
+    'High': 'text-red-700 bg-red-100',
+};
+
+const riskIconColorMap = {
+    'Low': 'text-green-500',
+    'Medium': 'text-yellow-500',
+    'High': 'text-red-500',
+};
+
 
 interface SolutionDisplayProps {
   solution: Solution;
@@ -105,6 +117,9 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat, onFin
   const { isSpeaking, isPaused, speak, pause, resume, cancel, isSupported } = useTextToSpeech();
     
   const fullTextToSpeak = useMemo(() => {
+      if (!solution.diagnosis || !solution.difficulty || !solution.estimatedTime || !solution.tools || !solution.instructions || !solution.potentialPitfalls) {
+        return "";
+      }
       const diagnosis = `Diagnosis: ${solution.diagnosis}`;
       const difficulty = `The difficulty is ${solution.difficulty} and it should take about ${solution.estimatedTime}.`;
       const tools = solution.tools.length > 0
@@ -127,6 +142,11 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat, onFin
           pause();
       }
   };
+
+  if (!solution.diagnosis || !solution.instructions) {
+    // This case should be handled by App.tsx, but as a fallback:
+    return <div className="text-center p-4">Could not display the solution.</div>;
+  }
 
   return (
     <div className="w-full text-left">
@@ -156,6 +176,11 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat, onFin
         </div>
       </div>
       
+       <div className={`flex items-center text-sm font-semibold rounded-full px-4 py-1.5 mb-6 inline-flex ${riskColorMap[solution.risk]}`}>
+          <ShieldCheckIcon className={`h-5 w-5 mr-2 ${riskIconColorMap[solution.risk]}`} />
+          Risk Level: {solution.risk}
+      </div>
+
       <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex items-center text-sm text-gray-700 bg-gray-100 rounded-full px-4 py-1.5">
             <ChartBarIcon className="h-5 w-5 text-gray-500 mr-2" />
@@ -183,9 +208,9 @@ const SolutionDisplay: React.FC<SolutionDisplayProps> = ({ solution, chat, onFin
                 <ToolIcon className="h-7 w-7 text-green-500 mr-3" />
                 <h3 className="text-2xl font-semibold text-gray-700">Tools Needed</h3>
             </div>
-            {solution.tools.length > 0 && <CopyButton textToCopy={solution.tools.join('\n')} />}
+            {solution.tools && solution.tools.length > 0 && <CopyButton textToCopy={solution.tools.join('\n')} />}
         </div>
-        {solution.tools.length > 0 ? (
+        {solution.tools && solution.tools.length > 0 ? (
           <ul className="space-y-2">
             {solution.tools.map((tool, index) => (
               <li key={index} className="flex items-start">

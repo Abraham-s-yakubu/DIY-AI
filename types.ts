@@ -1,10 +1,12 @@
 export interface Solution {
-  diagnosis: string;
-  tools: string[];
-  instructions:string[];
-  difficulty: string;
-  estimatedTime: string;
-  potentialPitfalls: string[];
+  risk: 'Low' | 'Medium' | 'High';
+  safetyWarning?: string;
+  diagnosis?: string;
+  tools?: string[];
+  instructions?: string[];
+  difficulty?: string;
+  estimatedTime?: string;
+  potentialPitfalls?: string[];
 }
 
 export interface ChatMessage {
